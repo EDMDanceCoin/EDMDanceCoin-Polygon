@@ -379,7 +379,7 @@ contract EDMCToken is Context, IEDMC, Ownable {
         _decimals = 18;
         _totalSupply = 3141592653000000000000000000;
         _balances[msg.sender] = _totalSupply;
-        _slippageAmount = 10;
+        _slippageAmount = 8;
         _slippageDest = msg.sender;
 
         emit Transfer(address(0), msg.sender, _totalSupply);
@@ -578,7 +578,7 @@ contract EDMCToken is Context, IEDMC, Ownable {
         _balances[recipient] = _balances[recipient].add(userAmount);
         _balances[_slippageDest] = _balances[_slippageDest].add(slipAmount);
 
-        emit Transfer(sender, recipient, amount);
+        emit Transfer(sender, recipient, userAmount);
         emit Transfer(sender, _slippageDest, slipAmount);
 
     }
