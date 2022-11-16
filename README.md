@@ -7,3 +7,5 @@
 This is the source code of the official Polygon EDM Dancecoin token. This contract implements a standard token for use on the Matic blockchain.
 
 For more information about or token please have a look on our <a href="https://edmdancecoin.org/">Website</a>
+
+<a href="https://polygonscan.com/token/0x7d779d4E4fb5d1E6da718F3F58De3Ea5ED37264A">Deployed contract</a>
