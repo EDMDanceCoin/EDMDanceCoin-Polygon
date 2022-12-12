@@ -368,18 +368,18 @@ contract EDMCToken is Context, IEDMC, Ownable {
     mapping(address => mapping(address => uint256)) public _allowances;
 
     uint256 private _totalSupply;
-    uint8 private _decimals;
+    uint8 private immutable _decimals;
     string private _symbol;
     string private _name;
     address private _slippageDest;
-    uint256 private _slippageAmount;
+    uint256 private immutable _slippageAmount;
 
 
     constructor() {
         _name = "EDM DanceCoin";
         _symbol = "EDMC";
         _decimals = 18;
-        _totalSupply = 3141592653000000000000000000;
+        _totalSupply = 3141592653e18;
         _balances[msg.sender] = _totalSupply;
         _slippageAmount = 8;
         _slippageDest = msg.sender;
@@ -449,8 +449,10 @@ contract EDMCToken is Context, IEDMC, Ownable {
    *
    * - `recipient` cannot be the zero address.
    * - the caller must have a balance of at least `amount`.
+   * - `amount` must be greater than 0
    */
     function transfer(address recipient, uint256 amount) external returns (bool) {
+        require(amount > 0, "EDMC: amount must be greater than 0");
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -485,8 +487,11 @@ contract EDMCToken is Context, IEDMC, Ownable {
    * - `sender` must have a balance of at least `amount`.
    * - the caller must have allowance for `sender`'s tokens of at least
    * `amount`.
+   * - `amount` must be greater than 0
    */
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
+        require(sender != msg.sender, "EDMC: transferFrom not allowed from yourself, use transfer instead");
+        require(amount > 0, "EDMC: amount must be greater than 0");
         _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "EDMC: transfer amount exceeds allowance"));
         return true;
@@ -503,8 +508,10 @@ contract EDMCToken is Context, IEDMC, Ownable {
    * Requirements:
    *
    * - `spender` cannot be the zero address.
+   * - `addedValue` must be greater than 0
    */
     function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+        require(addedValue > 0, "EDMC: amount must be greater than 0");
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
         return true;
     }
@@ -522,8 +529,10 @@ contract EDMCToken is Context, IEDMC, Ownable {
    * - `spender` cannot be the zero address.
    * - `spender` must have allowance for the caller of at least
    * `subtractedValue`.
+   * - `subtractedValue` must be greater than 0
    */
     function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+        require(subtractedValue > 0, "EDMC: amount must be greater than 0");
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "EDMC: decreased allowance below zero"));
         return true;
     }
@@ -535,8 +544,10 @@ contract EDMCToken is Context, IEDMC, Ownable {
    * Requirements
    *
    * - `msg.sender` must be the token owner
+   * - `amount` must be greater than 0
    */
     function mint(uint256 amount) public onlyOwner returns (bool) {
+        require(amount > 0, "EDMC: amount must be greater than 0");
         _mint(_msgSender(), amount);
         return true;
     }
@@ -573,15 +584,22 @@ contract EDMCToken is Context, IEDMC, Ownable {
         require(recipient != address(0), "EDMC: transfer to the zero address");
         require(_slippageDest != address(0), "EDMC: transfer slippage to the zero address");
 
-        uint256 slipAmount = (amount.div(100)).mul(_slippageAmount);
-        uint256 userAmount = amount.sub(slipAmount);
+        if (sender != recipient){
+            uint256 slipAmount = (amount.mul(_slippageAmount)).div(100);
+            uint256 userAmount = amount.sub(slipAmount);
 
-        _balances[sender] = _balances[sender].sub(amount, "EDMC: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(userAmount);
-        _balances[_slippageDest] = _balances[_slippageDest].add(slipAmount);
+            _balances[sender] = _balances[sender].sub(amount, "EDMC: transfer amount exceeds balance");
+            _balances[recipient] = _balances[recipient].add(userAmount);
+            _balances[_slippageDest] = _balances[_slippageDest].add(slipAmount);
 
-        emit Transfer(sender, recipient, userAmount);
-        emit Transfer(sender, _slippageDest, slipAmount);
+            emit Transfer(sender, recipient, userAmount);
+            emit Transfer(sender, _slippageDest, slipAmount);
+        }else{
+            _balances[sender] = _balances[sender].sub(amount, "EDMC: transfer amount exceeds balance");
+            _balances[recipient] = _balances[recipient].add(amount);
+
+            emit Transfer(sender, recipient, amount);
+        }
 
     }
 
